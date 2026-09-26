@@ -3,9 +3,11 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <iomanip>
+#include <sstream>
 int main()
 {
-	float restartTimer = 2.5;
+	float restartTimer = 5.f;
 	float jumpCooldown = 0.5;
 	bool showHitboxes = false;
 	float buttonCooldown = 0.25;
@@ -24,6 +26,9 @@ int main()
 	int score = 0;
 	sf::Text gameOverText(mcFont, "GAME OVER", 60);
 	gameOverText.setPosition({ 250, 200 });
+	sf::Text restartText(mcFont, "Restart in " + std::to_string(restartTimer), 30);
+	restartText.setPosition({ 300,350 });
+	restartText.setFillColor(sf::Color::White);
 	sf::Text scoreText(mcFont, "Score: " + std::to_string(score), 30);
 	sf::Clock clock;
 	sf::Texture pillarTexture;
@@ -45,13 +50,9 @@ int main()
 		std::cout << "Failed to load playerSprite\n";
 	}
 	std::vector <sf::Sprite*> pillars;
-	sf::Sprite* firstPillar = new sf::Sprite(pillarTexture);
 	sf::Sprite playerSprite(playerTexture);
 	playerSprite.setScale({ 0.1f, 0.1f });
 	playerSprite.setPosition({ 400, 300 });
-	firstPillar->setScale({ 0.5f, 0.5f });
-	firstPillar->setPosition({ 800.f, (float)randomY });
-	pillars.push_back(firstPillar);
 	while (window.isOpen())
 	{
 		int randomY = rand() % 400;
@@ -70,8 +71,10 @@ int main()
 		{
 			background2.setPosition({ 780, 0 });
 		}
-		background1.move({ -200 * deltaTime, 0 });
-		background2.move({ -200 * deltaTime, 0 });
+		float pillarSpeed = 200.f + (score * 10.f);
+		float backgroundSpeed = 200.f + (score * 10.f);
+		background1.move({ -backgroundSpeed * deltaTime, 0 });
+		background2.move({ -backgroundSpeed * deltaTime, 0});
 		if (spawnTimer >= spawnInterval)
 		{
 			spawnTimer = 0;
@@ -136,7 +139,17 @@ int main()
 							window.close();
 						}
 					}
-					restartTimer -= deltaTime;
+					if (restartTimer > 0)
+					{
+						restartTimer -= deltaTime;
+					}
+					if (restartTimer < 0)
+					{
+						restartTimer = 0;
+					}
+					std::ostringstream ss;
+					ss << std::fixed << std::setprecision(1) << restartTimer;
+					restartText.setString("Restart in " + ss.str());
 					sf::FloatRect background1Position = background1.getGlobalBounds();
 					if ((background1Position.position.x + background1Position.size.x) <= 0)
 					{
@@ -155,22 +168,23 @@ int main()
 						}
 						pillars.clear();
 						score = 0;
-						restartTimer = 2.5f;
+						restartTimer = 5.f;
 						spawnTimer = 0.f;
+						spawnInterval = 2.f;
 						velocity = 0.f;
 						playerSprite.setPosition({ 400,300 });
 						scoreText.setPosition({ 1, 1 });
-						background1.setPosition({ 0, 0 });
-						background2.setPosition({ 800, 0 });
+
 						break;
 					}
-					background1.move({ -200 * deltaTime, 0 });
-					background2.move({ -200 * deltaTime, 0 });
+					background1.move({ -backgroundSpeed * deltaTime, 0 });
+					background2.move({ -backgroundSpeed * deltaTime, 0 });
 					scoreText.setPosition({ 300, 300 });
 					window.clear();
 					window.draw(background1);
 					window.draw(background2);
 					window.draw(gameOverText);
+					window.draw(restartText);
 					window.draw(scoreText);
 					window.display();
 				}
@@ -185,7 +199,7 @@ int main()
 				i--;
 				continue;
 			}
-			pillars[i]->move({ -200 * deltaTime, 0 });
+			pillars[i]->move({ -pillarSpeed * deltaTime, 0 });
 		}
 		window.clear();
 		window.draw(background1);

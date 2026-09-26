@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -18,6 +19,18 @@ int main()
 	float spawnInterval = 2.f;
 	sf::RenderWindow window(sf::VideoMode({ 800, 600 }), "Rip off flappy bird");
 	window.setFramerateLimit(165);
+	sf::SoundBuffer dieBuffer;
+	if (!dieBuffer.loadFromFile("die.mp3"))
+	{
+		std::cout << "Failed to load die.mp3\n";
+	}
+	sf::Sound die(dieBuffer);
+	sf::SoundBuffer jumpBuffer;
+	if (!jumpBuffer.loadFromFile("jump.mp3"))
+	{
+		std::cout << "Failed to load jump.mp3\n";
+	}
+	sf::Sound jumpSound(jumpBuffer);
 	sf::Image icon;
 	icon.loadFromFile("icon.png");
 	window.setIcon(icon);
@@ -62,14 +75,14 @@ int main()
 		spawnTimer += deltaTime;
 		velocity += 500.f * deltaTime;
 		sf::FloatRect background1Position = background1.getGlobalBounds();
+		sf::FloatRect background2Position = background2.getGlobalBounds();
 		if ((background1Position.position.x + background1Position.size.x) <= 0)
 		{
-			background1.setPosition({ 780, 0 });
+			background1.setPosition({ background2Position.position.x + background2Position.size.x -20, 0 });
 		}
-		sf::FloatRect background2Position = background2.getGlobalBounds();
 		if ((background2Position.position.x + background2Position.size.x) <= 0)
 		{
-			background2.setPosition({ 780, 0 });
+			background2.setPosition({ background1Position.position.x + background1Position.size.x -20, 0 });
 		}
 		float pillarSpeed = 200.f + (score * 10.f);
 		float backgroundSpeed = 200.f + (score * 10.f);
@@ -95,6 +108,7 @@ int main()
 		{
 			jumpCooldown = 0.5;
 			velocity = -300.f;
+			jumpSound.play();
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) && playerPosition.position.x > 0)
 		{
@@ -130,8 +144,21 @@ int main()
 			);
 			if (playerSprite.getGlobalBounds().findIntersection(smallerPillarBounds))
 			{
+				die.play();
+				float goingUpSpeed = -100;
+				velocity = 170;
 				while (window.isOpen())
 				{
+					if (goingUpSpeed <= 0)
+					{
+						playerSprite.move({ 0, goingUpSpeed * deltaTime });
+						goingUpSpeed += (deltaTime * 170);
+					}
+					else
+					{
+						playerSprite.move({ 0, velocity * deltaTime });
+						velocity += (deltaTime * 300);
+					}
 					while (std::optional event = window.pollEvent())
 					{
 						if (event->is<sf::Event::Closed>())
@@ -139,6 +166,7 @@ int main()
 							window.close();
 						}
 					}
+					deltaTime = clock.restart().asSeconds();
 					if (restartTimer > 0)
 					{
 						restartTimer -= deltaTime;
@@ -151,14 +179,14 @@ int main()
 					ss << std::fixed << std::setprecision(1) << restartTimer;
 					restartText.setString("Restart in " + ss.str());
 					sf::FloatRect background1Position = background1.getGlobalBounds();
+					sf::FloatRect background2Position = background2.getGlobalBounds();
 					if ((background1Position.position.x + background1Position.size.x) <= 0)
 					{
-						background1.setPosition({ 780, 0 });
+						background1.setPosition({ background2Position.position.x + background2Position.size.x -20, 0 });
 					}
-					sf::FloatRect background2Position = background2.getGlobalBounds();
 					if ((background2Position.position.x + background2Position.size.x) <= 0)
 					{
-						background2.setPosition({ 780, 0 });
+						background2.setPosition({ background1Position.position.x + background1Position.size.x -20, 0 });
 					}
 					if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R) && restartTimer <= 0)
 					{
@@ -168,6 +196,7 @@ int main()
 						}
 						pillars.clear();
 						score = 0;
+						scoreText.setString("Score " + std::to_string(score));
 						restartTimer = 5.f;
 						spawnTimer = 0.f;
 						spawnInterval = 2.f;
@@ -183,6 +212,11 @@ int main()
 					window.clear();
 					window.draw(background1);
 					window.draw(background2);
+					for (int i = 0; i < pillars.size(); i++)
+					{
+						window.draw(*pillars[i]);
+					}
+					window.draw(playerSprite);
 					window.draw(gameOverText);
 					window.draw(restartText);
 					window.draw(scoreText);
@@ -201,6 +235,11 @@ int main()
 			}
 			pillars[i]->move({ -pillarSpeed * deltaTime, 0 });
 		}
+		sf::RectangleShape hitboxesplayer({ playerPosition.size.x, playerPosition.size.y });
+		hitboxesplayer.setPosition({ playerPosition.position.x, playerPosition.position.y });
+		hitboxesplayer.setFillColor(sf::Color::Transparent);
+		hitboxesplayer.setOutlineColor(sf::Color::Red);
+		hitboxesplayer.setOutlineThickness(2);
 		window.clear();
 		window.draw(background1);
 		window.draw(background2);
@@ -221,6 +260,7 @@ int main()
 			hitboxesPillar.setOutlineThickness(2);
 			if (showHitboxes == true)
 			{
+				window.draw(hitboxesplayer);
 				window.draw(hitboxesPillar);
 			}
 		}

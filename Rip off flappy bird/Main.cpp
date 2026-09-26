@@ -62,14 +62,15 @@ int main()
 		spawnTimer += deltaTime;
 		velocity += 500.f * deltaTime;
 		sf::FloatRect background1Position = background1.getGlobalBounds();
+		sf::FloatRect background2Position = background2.getGlobalBounds();
 		if ((background1Position.position.x + background1Position.size.x) <= 0)
 		{
-			background1.setPosition({ 780, 0 });
+			background1.setPosition({ background2Position.position.x + background2Position.size.x - 20, 0 });
 		}
-		sf::FloatRect background2Position = background2.getGlobalBounds();
+		background1Position = background1.getGlobalBounds();
 		if ((background2Position.position.x + background2Position.size.x) <= 0)
 		{
-			background2.setPosition({ 780, 0 });
+			background2.setPosition({ background1Position.position.x + background1Position.size.x - 20, 0 });
 		}
 		float pillarSpeed = 200.f + (score * 10.f);
 		float backgroundSpeed = 200.f + (score * 10.f);
@@ -139,6 +140,7 @@ int main()
 							window.close();
 						}
 					}
+					deltaTime = clock.restart().asSeconds();
 					if (restartTimer > 0)
 					{
 						restartTimer -= deltaTime;
@@ -151,14 +153,15 @@ int main()
 					ss << std::fixed << std::setprecision(1) << restartTimer;
 					restartText.setString("Restart in " + ss.str());
 					sf::FloatRect background1Position = background1.getGlobalBounds();
+					sf::FloatRect background2Position = background2.getGlobalBounds();
 					if ((background1Position.position.x + background1Position.size.x) <= 0)
 					{
-						background1.setPosition({ 780, 0 });
+						background1.setPosition({ background2Position.position.x + background2Position.size.x - 20, 0 });
 					}
-					sf::FloatRect background2Position = background2.getGlobalBounds();
+					background1Position = background1.getGlobalBounds();
 					if ((background2Position.position.x + background2Position.size.x) <= 0)
 					{
-						background2.setPosition({ 780, 0 });
+						background2.setPosition({ background1Position.position.x + background1Position.size.x - 20, 0 });
 					}
 					if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R) && restartTimer <= 0)
 					{
